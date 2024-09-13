@@ -7,23 +7,23 @@ from datetime import datetime
 app = Flask(__name__)
 
 # Configurar la conexión a la base de datos
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:Test5678@127.0.0.1/inoutempleados'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://clockinoutdb:Test5678@34.44.192.81/dbINOClockinout'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
 # Definir el modelo para la tabla Empleados
 class Empleado(db.Model):
-    __tablename__ = 'tbl_Empleados'
+    __tablename__ = 'empleados'
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
     apellido = db.Column(db.String(100), nullable=False)
     uidLlavero = db.Column(db.String(100), nullable=False)
 
 class JornadaLaboral(db.Model):
-    __tablename__ = 'tbl_jornadalaboral'
+    __tablename__ = 'jornada'
     id = db.Column(db.Integer, primary_key=True)
-    id_empleado = db.Column(db.Integer, db.ForeignKey('tbl_Empleados.id'), nullable=False)
+    id_empleado = db.Column(db.Integer, db.ForeignKey('empleados.id'), nullable=False)
     nombre_empleado = db.Column(db.String(100), nullable=False)
     horario_entrada = db.Column(db.DateTime, nullable=False)
     horario_salida = db.Column(db.DateTime, nullable=False)
@@ -50,9 +50,9 @@ def get_empleados():
     } for e in empleados])
 
 # Ruta para obtener un empleado por ID
-@app.route('/empleados/<int:id>', methods=['GET'])
-def get_empleado_by_id(id):
-    empleado = Empleado.query.get(id)
+@app.route('/empleados/<string:uidLlavero>', methods=['GET'])
+def get_empleado_by_id(uidLlavero):
+    empleado = Empleado.query.filter_by(uidLlavero=uidLlavero).first()
     if empleado is None:
         abort(404, description="Empleado no encontrado")
     return jsonify({
@@ -91,7 +91,7 @@ def entrada_empleado():
             'id': nueva_jornada.id,
             'id_empleado': nueva_jornada.id_empleado,
             'nombre_empleado': nueva_jornada.nombre_empleado,
-            'horario_entrada': nueva_jornada.horario_entrada.isoformat()
+            'horario_entrada': nueva_jornada.horario_entrada.strftime("%Y-%m-%dT%H:%M")
         }), 201
     except Exception as e:
         db.session.rollback()
@@ -111,7 +111,7 @@ def ultima_entrada(id_empleado):
             'id': ultima_jornada.id,
             'id_empleado': ultima_jornada.id_empleado,
             'nombre_empleado': ultima_jornada.nombre_empleado,
-            'horario_entrada': ultima_jornada.horario_entrada.isoformat()
+            'horario_entrada': ultima_jornada.horario_entrada.strftime("%Y-%m-%dT%H:%M")
         }), 200
 
     except Exception as e:
@@ -138,9 +138,9 @@ def salida_empleado():
         # Calcular la cantidad de horas trabajadas
         if jornada.horario_entrada and jornada.horario_salida:
             tiempo_trabajado = jornada.horario_salida - jornada.horario_entrada
-            cantidad_horas = int(tiempo_trabajado.total_seconds() // 3600)  # Convertir segundos a horas enteras
-            jornada.cantidad_horas = cantidad_horas
-
+            cantidad_horas = int(tiempo_trabajado.total_seconds() // 3600)  # Horas enteras
+            cantidad_minutos = int((tiempo_trabajado.total_seconds() % 3600) // 60)  # Minutos restantes
+            jornada.cantidad_horas = cantidad_horas + cantidad_minutos / 60  # Total en horas con fracciones
         # Guardar los cambios en la base de datos
         db.session.commit()
 
@@ -149,8 +149,8 @@ def salida_empleado():
             'id_empleado': jornada.id_empleado,
             'id_salida': jornada.id,
             'cantidad_horas': jornada.cantidad_horas,
-            'horario_entrada': jornada.horario_entrada.isoformat(),
-            'horario_salida': jornada.horario_salida.isoformat()
+            'horario_entrada': jornada.horario_entrada.strftime("%Y-%m-%dT%H:%M"),
+            'horario_salida': jornada.horario_salida.strftime("%Y-%m-%dT%H:%M")
         }), 200
 
     except Exception as e:
