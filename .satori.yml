@@ -1,0 +1,13 @@
+settings:
+    name: "START SERVER AND VERIFY HEALTH SERVICE"
+    image: python
+    image: curlimages/curl:7.83.1
+
+test:
+  python:
+  - python3 app.py
+  assertStdoutContains: 
+  - HTTP/2 200
+  - ok
+  satori:
+    - curl -si http://127.0.0.1:5000/health
