@@ -12,16 +12,16 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = 'secret_key'
 
-# Configurar la conexión a la base de datos
+#-------------------------C-------------------------O------------------------- API'S
+# ------------------------- Configuracion la conexión a la base de datos
 app.config['SQLALCHEMY_DATABASE_URI'] = (
     f"mysql+pymysql://{os.getenv('DATABASE_USER')}:{os.getenv('DATABASE_PASSWORD')}@"
     f"{os.getenv('DATABASE_HOST')}/{os.getenv('DATABASE_NAME')}"
 )
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
 db = SQLAlchemy(app)
 
-# Definir el modelo para la tabla Empleados
+# ------------------------- Defininicion del modelo de esquema de los datos de la base 
 class Empleado(db.Model):
     __tablename__ = 'empleados'
     id = db.Column(db.Integer, primary_key=True)
@@ -38,23 +38,22 @@ class JornadaLaboral(db.Model):
     horario_salida = db.Column(db.DateTime, nullable=False)
     cantidad_horas = db.Column(db.Integer(), nullable=False)
 
-# Modelo de usuario
 class User(db.Model):
     __tablename__ = 'usuario'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
 
-# Ruta para verificar la conexión a la base de datos
+# ------------------------- Ruta para verificar la conexión a la base de datos GET /health
 @app.route('/health', methods=['GET'])
 def health_check():
     try:
-        db.session.execute(text('SELECT 1'))  # Ejecutar una consulta simple para verificar la conexión
+        db.session.execute(text('SELECT 1')) 
         return jsonify({'status': 'ok', 'message': 'Conexión a la base de datos exitosa'}), 200
     except OperationalError:
         return jsonify({'status': 'error', 'message': 'No se puede conectar a la base de datos'}), 500
 
-# Ruta para obtener todos los empleados
+# ------------------------- Ruta para obtener todos los empleados GET /empleados
 @app.route('/empleados', methods=['GET'])
 def get_empleados():
     empleados = Empleado.query.all()
@@ -65,7 +64,7 @@ def get_empleados():
         'uidLlavero': e.uidLlavero
     } for e in empleados])
 
-# Ruta para obtener un empleado por ID
+#  ------------------------- Ruta para obtener un empleado por ID GET /empleados/uidllavero (ver si cambiar a huella digital)
 @app.route('/empleados/<string:uidLlavero>', methods=['GET'])
 def get_empleado_by_id(uidLlavero):
     empleado = Empleado.query.filter_by(uidLlavero=uidLlavero).first()
@@ -78,7 +77,7 @@ def get_empleado_by_id(uidLlavero):
         'uidLlavero': empleado.uidLlavero
     })
 
-# Ruta para insertar una entrada de empleado
+#   -------------------------  Ruta para insertar una entrada de empleado POST /entrada_empleado
 @app.route('/entrada_empleado', methods=['POST'])
 def entrada_empleado():
     data = request.json
@@ -109,11 +108,12 @@ def entrada_empleado():
             'nombre_empleado': nueva_jornada.nombre_empleado,
             'horario_entrada': nueva_jornada.horario_entrada.strftime("%Y-%m-%dT%H:%M")
         }), 201
+    
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
-# Ruta para obtener la última entrada de un empleado
+#  -------------------------  Ruta para obtener la última entrada de un empleado GET /ultima_entrada/idempleado
 @app.route('/ultima_entrada/<int:id_empleado>', methods=['GET'])
 def ultima_entrada(id_empleado):
     try:
@@ -133,7 +133,7 @@ def ultima_entrada(id_empleado):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
-# Ruta para registrar la salida de un empleado
+# -------------------------   Ruta para registrar la salida de un empleado  POST /salida_empleado
 @app.route('/salida_empleado', methods=['POST'])
 def salida_empleado():
     data = request.json
@@ -154,9 +154,10 @@ def salida_empleado():
         # Calcular la cantidad de horas trabajadas
         if jornada.horario_entrada and jornada.horario_salida:
             tiempo_trabajado = jornada.horario_salida - jornada.horario_entrada
-            cantidad_horas = int(tiempo_trabajado.total_seconds() // 3600)  # Horas enteras
-            cantidad_minutos = int((tiempo_trabajado.total_seconds() % 3600) // 60)  # Minutos restantes
-            jornada.cantidad_horas = cantidad_horas + cantidad_minutos / 60  # Total en horas con fracciones
+            cantidad_horas = int(tiempo_trabajado.total_seconds() // 3600)  
+            cantidad_minutos = int((tiempo_trabajado.total_seconds() % 3600) // 60)  
+            jornada.cantidad_horas = cantidad_horas + cantidad_minutos / 60  
+
         # Guardar los cambios en la base de datos
         db.session.commit()
 
@@ -173,7 +174,7 @@ def salida_empleado():
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
-# Ruta para registrar usuarios (opcional, si necesitas crear nuevos usuarios)
+# ------------------------- Ruta para registrar usuarios (opcional, si necesitas crear nuevos usuarios) /register
 @app.route('/register', methods=['POST'])
 def register():
     if request.is_json:
@@ -181,11 +182,10 @@ def register():
         username = data.get('username')
         password = data.get('password')
 
-         # Verificar si el usuario ya existe
+        # Verificar si el usuario ya existe
         if User.query.filter_by(username=username).first():
             flash('El nombre de usuario ya está en uso')
             return {"message": "El nombre de usuario ya está en uso"}, 200
-        
         if not username or not password:
             return {"message": "Nombre de usuario y contraseña son requeridos"}, 400
 
@@ -196,11 +196,10 @@ def register():
         new_user = User(username=username, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
-        
         return {"message": "Usuario registrado correctamente"}, 201
-
     return {"message": "Solicitud debe ser en formato JSON"}, 400
 
+# -------------------------C-------------------------O------------------------- LOGIN Y HOME
 # Ruta para la página de login
 @app.route('/', methods=['GET', 'POST'])
 def login():
