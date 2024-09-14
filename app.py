@@ -1,16 +1,19 @@
 from flask import Flask, request, jsonify, abort, render_template, redirect, url_for, flash, session # type: ignore
-from flask_sqlalchemy import SQLAlchemy # type: ignore
+from models import db, User, JornadaLaboral, Empleado
 from sqlalchemy.exc import OperationalError # type: ignore
 from sqlalchemy import text # type: ignore
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash # type: ignore
-import os
 from dotenv import load_dotenv # type: ignore
+from page import page_bp
+from flask_sqlalchemy import SQLAlchemy # type: ignore
+import os
 
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = 'secret_key'
+app.register_blueprint(page_bp)
 
 #-------------------------C-------------------------O------------------------- API'S
 # ------------------------- Configuracion la conexión a la base de datos
@@ -19,30 +22,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = (
     f"{os.getenv('DATABASE_HOST')}/{os.getenv('DATABASE_NAME')}"
 )
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
 
-# ------------------------- Defininicion del modelo de esquema de los datos de la base 
-class Empleado(db.Model):
-    __tablename__ = 'empleados'
-    id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(100), nullable=False)
-    apellido = db.Column(db.String(100), nullable=False)
-    uidLlavero = db.Column(db.String(100), nullable=False)
-
-class JornadaLaboral(db.Model):
-    __tablename__ = 'jornada'
-    id = db.Column(db.Integer, primary_key=True)
-    id_empleado = db.Column(db.Integer, db.ForeignKey('empleados.id'), nullable=False)
-    nombre_empleado = db.Column(db.String(100), nullable=False)
-    horario_entrada = db.Column(db.DateTime, nullable=False)
-    horario_salida = db.Column(db.DateTime, nullable=False)
-    cantidad_horas = db.Column(db.Integer(), nullable=False)
-
-class User(db.Model):
-    __tablename__ = 'usuario'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(120), nullable=False)
+db.init_app(app)
 
 # ------------------------- Ruta para verificar la conexión a la base de datos GET /health
 @app.route('/health', methods=['GET'])
