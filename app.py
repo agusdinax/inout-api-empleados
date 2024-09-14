@@ -1,13 +1,22 @@
-from flask import Flask, request, jsonify, abort # type: ignore
+from flask import Flask, request, jsonify, abort, render_template, redirect, url_for, flash, session # type: ignore
 from flask_sqlalchemy import SQLAlchemy # type: ignore
 from sqlalchemy.exc import OperationalError # type: ignore
 from sqlalchemy import text # type: ignore
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash # type: ignore
+import os
+from dotenv import load_dotenv # type: ignore
+
+load_dotenv()
 
 app = Flask(__name__)
+app.secret_key = 'secret_key'
 
 # Configurar la conexión a la base de datos
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://clockinoutdb:Test5678@34.44.192.81/dbINOClockinout'
+app.config['SQLALCHEMY_DATABASE_URI'] = (
+    f"mysql+pymysql://{os.getenv('DATABASE_USER')}:{os.getenv('DATABASE_PASSWORD')}@"
+    f"{os.getenv('DATABASE_HOST')}/{os.getenv('DATABASE_NAME')}"
+)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -28,6 +37,13 @@ class JornadaLaboral(db.Model):
     horario_entrada = db.Column(db.DateTime, nullable=False)
     horario_salida = db.Column(db.DateTime, nullable=False)
     cantidad_horas = db.Column(db.Integer(), nullable=False)
+
+# Modelo de usuario
+class User(db.Model):
+    __tablename__ = 'usuario'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password = db.Column(db.String(120), nullable=False)
 
 # Ruta para verificar la conexión a la base de datos
 @app.route('/health', methods=['GET'])
@@ -156,6 +172,76 @@ def salida_empleado():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+# Ruta para registrar usuarios (opcional, si necesitas crear nuevos usuarios)
+@app.route('/register', methods=['POST'])
+def register():
+    if request.is_json:
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+
+         # Verificar si el usuario ya existe
+        if User.query.filter_by(username=username).first():
+            flash('El nombre de usuario ya está en uso')
+            return {"message": "El nombre de usuario ya está en uso"}, 200
+        
+        if not username or not password:
+            return {"message": "Nombre de usuario y contraseña son requeridos"}, 400
+
+        # Generar un hash de la contraseña
+        hashed_password = generate_password_hash(password)
+        
+        # Crear un nuevo usuario
+        new_user = User(username=username, password=hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
+        
+        return {"message": "Usuario registrado correctamente"}, 201
+
+    return {"message": "Solicitud debe ser en formato JSON"}, 400
+
+# Ruta para la página de login
+@app.route('/', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        
+        # Buscar usuario en la base de datos
+        user = User.query.filter_by(username=username).first()
+        
+        # Imprimir la contraseña para depuración
+        if user:
+            print(f"Contraseña almacenada en la base de datos (hash): {user.password}")
+        print(f"Contraseña ingresada por el usuario: {password}")
+
+        # Validar usuario y contraseña
+        if user and check_password_hash(user.password, password):
+            session['user_id'] = user.id  # Guardar usuario en la sesión
+            flash('Inicio de sesión exitoso')
+            return redirect(url_for('home'))
+        else:
+            flash('Usuario o contraseña incorrectos')
     
+    return render_template('login.html')
+
+# Ruta para la página principal (home)
+@app.route('/home')
+def home():
+    if 'user_id' not in session:
+        flash('Debes iniciar sesión primero')
+        return redirect(url_for('login'))
+    
+    users = User.query.all()  # Obtenemos todos los usuarios para mostrar en la tabla
+    return render_template('home.html', users=users)
+
+# Ruta para cerrar sesión
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)  # Eliminar la sesión del usuario
+    flash('Has cerrado sesión correctamente')
+    return redirect(url_for('login'))
+
 if __name__ == '__main__':
     app.run(debug=True)
