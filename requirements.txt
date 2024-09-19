@@ -38,3 +38,9 @@ websocket-client==1.8.0
 Werkzeug==3.0.4
 flask_sqlalchemy
 python-dotenv
+python-dotnet
+python-dbalgo
+Flask
+Flask-SQLAlchemy
+werkzeug
+pymysql
