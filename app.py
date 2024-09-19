@@ -6,6 +6,7 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash # type: ignore
 from dotenv import load_dotenv # type: ignore
 from page import page_bp
+from flask_sqlalchemy import SQLAlchemy # type: ignore
 import os
 
 load_dotenv()
