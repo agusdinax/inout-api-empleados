@@ -46,3 +46,4 @@ werkzeug
 pymysql
 Flask-WTF
 Flask-Login
+flask
