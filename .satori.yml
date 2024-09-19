@@ -1,24 +1,25 @@
 settings:
- name: "Pruebas Agus"
- image: python
+  name: "Pruebas Agus"
+  image: python
 
 install:
   curl:
   - apt update
-  - apt install -qy curl
+  - apt install -qy curl screen
   requirements:
   - pip install -r requirements.txt
-  - pip install Flask
-
  
-
-python:
-  - python3 app.py
+run:
+  - screen -dm python3 app.py
+  - sleep 1
 
 test:
   assertStdoutContains: 
-  - HTTP/2 200
-  - ok
-  
-  satori:
-    - curl -si http://127.0.0.1:5000/health
+  - 200 OK
+  root:
+    - curl -si http://127.0.0.1:5000/
+  health:
+    assertStdoutContains:
+      - ok
+    run:
+      - curl -si http://127.0.0.1:5000/health
