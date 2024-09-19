@@ -44,3 +44,5 @@ Flask
 Flask-SQLAlchemy
 werkzeug
 pymysql
+Flask-WTF
+Flask-Login
