@@ -15,4 +15,4 @@ jobs:
         run: |
           pip3 install satori-ci
           satori config token $SATORITOKEN
-          satori run ./ --sync
+          satori run ./ --sync --output --report
