@@ -37,3 +37,4 @@ uc-micro-py==1.0.3
 websocket-client==1.8.0
 Werkzeug==3.0.4
 flask_sqlalchemy
+python-dotenv
