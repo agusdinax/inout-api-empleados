@@ -1,11 +1,22 @@
+settings:
+ name: "Pruebas Agus"
+ image: python
+
 install:
+  curl:
   - apt update
   - apt install -qy curl
+  requirements:
+  - pip install -r api-inout/requirements.txt
+ 
+
+python:
+  - python3 api-inout/app.py
 
 test:
   assertStdoutContains: 
   - HTTP/2 200
-  - Satori CI
-  - info@satori-ci.com
+  - ok
+  
   satori:
-    - curl -si https://satori.ci
+    - curl -si http://127.0.0.1:5000/health
