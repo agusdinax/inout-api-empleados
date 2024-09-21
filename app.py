@@ -30,7 +30,7 @@ db.init_app(app)
 def health_check():
     try:
         db.session.execute(text('SELECT 1')) 
-        return jsonify({'status': 'ok', 'message': 'Conexión a la base de datos exitosa'}), 200
+        return jsonify({'status': 'ok', 'message': 'Conexion a la base de datos exitosa'}), 200
     except OperationalError:
         return jsonify({'status': 'error', 'message': 'No se puede conectar a la base de datos'}), 500
 
