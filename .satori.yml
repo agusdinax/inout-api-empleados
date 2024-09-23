@@ -1,6 +1,10 @@
 settings:
   name: "Pruebas Agus"
   image: python
+  rate: 5 minutes
+  logOnFail: email
+  report: pdf
+
 
 #install:
  # curl:
