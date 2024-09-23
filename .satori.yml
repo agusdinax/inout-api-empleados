@@ -3,7 +3,6 @@ settings:
   image: python
   rate: 5 minutes
   logOnFail: email
-  report: false
 
 
 #install:
