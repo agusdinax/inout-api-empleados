@@ -1,16 +1,16 @@
 settings:
   name: "Pruebas Agus"
   image: python
-  rate: 5 minutes
+#cron: "*/5 * * * ? *"
   logOnFail: email
 
 
-#install:
- # curl:
-  #- apt update
-  #- apt install -qy curl screen
-#  requirements:
-#  - pip install -r requirements.txt
+install:
+ curl:
+  - apt update
+  - apt install -qy curl screen
+requirements:
+  - pip install -r requirements.txt
  
 run:
   - screen -dm python3 app.py
