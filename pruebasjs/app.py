@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, abort, render_template, redirect, url_for, flash, session # type: ignore
-from models import db, User, JornadaLaboral, Empleado
+from dbModels import db, User, JornadaLaboral, Empleado
 from sqlalchemy.exc import OperationalError # type: ignore
 from sqlalchemy import text # type: ignore
 from datetime import datetime

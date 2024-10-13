@@ -1,31 +1,23 @@
 settings:
   name: "Pruebas Agus"
-  image: python
-#cron: "*/5 * * * ? *"
-  logOnFail: email
+  description: This is a test with slack integration
+  logOnPass: email, telegram 
+  #timeout: 60 # the default value is 3600 seconds
+  # report: False
+  mitigation: Remove secrets from your code if the playbook fails
+  #cron: "*/5 * * * ? *"
+  count: 20
+  
+input:
+- - value: "Hello World"
+    mutate: radamsa
+    mutate_qty: 5
 
+  - value: "Hello World"
+    mutate: zzuf
+    mutate_qty: 5
 
-install:
- curl:
-  - apt update
-  - apt install -qy curl screen
-requirements:
-  - pip install -r requirements.txt
- 
-run:
-  - screen -dm python3 app.py
-  - sleep 1
-
-test:
-  assertStdoutContains: 
-  - 200 OK
-  root:
-    - curl -si http://127.0.0.1:5000/
-  health:
-    assertStdoutContains:
-      - ok
-      - Conexion a la base de datos exitosa
-    run:
-      - curl -si http://127.0.0.1:5000/health
-
-      #
+echo:
+  assertStdoutNotEqual: "Hello World"
+  input:
+  - echo -n ${{input}}

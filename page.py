@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for # type: ignore
-from models import db, JornadaLaboral
+from dbModels import db, JornadaLaboral
 
 # Crear un Blueprint para las nuevas rutas
 page_bp = Blueprint('page_bp', __name__)

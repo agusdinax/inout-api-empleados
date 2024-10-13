@@ -1,0 +1,36 @@
+
+
+
+@app.get("/login", response_class=templates.TemplateResponse)
+async def login(request: Request):
+    messages = flash.get()
+    return templates.TemplateResponse("login.html", {"request": request, "messages": messages})
+
+@app.post("/")
+async def login_post(request: Request, username: str = Form(...), password: str = Form(...)):
+    db: Session = SessionLocal()  # Crea una nueva sesión de la base de datos
+    user = authenticate_user(db, username, password)
+    if user:
+        flash.set("Inicio de sesión exitoso")
+        response = RedirectResponse(url="/home")
+        response.set_cookie(key="user_id", value=user.id)
+        return response
+
+    flash.set("Nombre de usuario o contraseña incorrectos", category="error")
+    return RedirectResponse(url="/login")
+
+@app.get("/home", response_class=templates.TemplateResponse)
+async def home(request: Request):
+    messages = flash.get()
+    return templates.TemplateResponse("home.html", {"request": request, "messages": messages})
+
+@app.get("/logout")
+async def logout():
+    response = RedirectResponse(url="/")
+    response.delete_cookie("user_id")
+    flash.set("Has cerrado sesión correctamente")
+    return response
+
+if __name__ == "__main__":
+    import uvicorn # type: ignore
+    uvicorn.run(app, host="127.0.0.1", port=8000)
